@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CS171 Homework 1</title>
+
+  <style type="text/css">
+  
+  .headcursor{
+    cursor: s-resize
+  }
+
+  .moused{
+    background-color: #FFFF66
+  }
+
+  </style>
+</head>
+<body>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script>
+
+  // may be used
+  var numcol = 3
+
+  // page title
+  d3.select("body").append("h1").text("Unemployment Rates for States")
+    .style({
+      "font-family": "Helvetica", 
+      "color": "#183061", 
+      "font-size": "180%",
+      "font-weight": "normal",
+      "text-align": "center",
+    });
+
+  // data table
+  d3.text("unemp_states_us_nov_2013.tsv", function(text){
+    data = d3.tsv.parseRows(text);
+    headers = data[0];
+    headers.push("Graph");
+    numbers = data.splice(1, data.length);
+
+    // add table
+    var table = d3.select("body").append("table")
+      .style({
+        "border-collapse": "collapse",
+        "border": "1px solid black",
+        "font-family": "Helvetica",
+        "font-size": "13px",
+        "margin-left": "auto",
+        "margin-right": "auto",
+      })
+    thead = table.append("thead")
+    tbody = table.append("tbody")
+    tcaption = table.append("caption");
+
+    // color function
+    var color = d3.scale.linear()
+    .domain([d3.min(d3.extent(numbers, function(d){return parseFloat(d[2])})), 
+      d3.max(d3.extent(numbers, function(d){return parseFloat(d[2])}))])
+    .interpolate(d3.interpolateRgb)
+    .range(["orangered", "silver"])
+
+    // add caption
+    var caption = tcaption
+    .style({
+      "border": "1px solid black",
+      "padding": "2px"
+    })
+    .html(function(d) {
+      return("Unemployment Rates for States" + "</br>" + "Monthly Rankings" + "</br>" + "Seasonally Adjusted" + "</br>" + "Dec. 2013" + "<sup>" + "p" + "</sup>");
+    });
+
+    // add header
+    var header = thead.selectAll("th")
+    .data(headers)
+    .enter()
+    .append("th")
+    .style({
+      "border": "1px solid black",
+      "padding": "2px",
+    })
+    .attr("class", "headcursor")
+    .text(function(d){return d})
+    // sort table
+    .on("load", function(){
+      tbody.selectAll("tr").sort(function(a, b) {
+        score = d3.ascending(parseFloat(a[i]), parseFloat(b[i]));
+        if (score != 0){
+          return score;
+        }
+        else {
+          return d3.ascending(a[1], b[1]);
+        }
+      })
+    })
+    .on("click", function (d, i) {
+      d3.selectAll("th.headcursor").style("cursor", "n-resize")
+      if (i == 2){
+        tbody.selectAll("tr").sort(function(a, b) {
+          score = d3.ascending(parseFloat(a[i]), parseFloat(b[i]));
+          if (score != 0){
+            return score;
+          }
+          else {
+            return d3.ascending(a[1], b[1]);
+          }
+        })
+        .style("background-color", function(d, i){
+          if (i % 2 == 0){
+            return "#FFFFFF";
+          }
+          else{
+            return "#E0E0E0";
+          }
+        });
+      }
+      else if (i == 1){
+        tbody.selectAll("tr").sort(function(a, b) {
+          return d3.ascending(a[i], b[i]);
+        })
+        .style("background-color", function(d, i){
+          if (i % 2 == 0){
+            return "#FFFFFF";
+          }
+          else{
+            return "#E0E0E0";
+          }
+        });
+      }
+    })
+    .on("dblclick", function (d, i) {
+      d3.selectAll("th.headcursor").style("cursor", "s-resize")
+      if (i == 2){
+        tbody.selectAll("tr").sort(function(a, b) {
+          score = d3.descending(parseFloat(a[i]), parseFloat(b[i]));
+          if (score != 0){
+            return score;
+          }
+          else {
+            return d3.descending(a[1], b[1]);
+          }
+        })
+        .style("background-color", function(d, i){
+          if (i % 2 == 0){
+            return "#FFFFFF";
+          }
+          else{
+            return "#E0E0E0";
+          }
+        });
+      }
+      else if (i == 1){
+        tbody.selectAll("tr").sort(function(a, b) {
+          return d3.descending(a[i], b[i]);
+        })
+        .style("background-color", function(d, i){
+          if (i % 2 == 0){
+            return "#FFFFFF";
+          }
+          else{
+            return "#E0E0E0";
+          }
+        });
+      }
+    })
+    ;
+
+    // table rows
+    var rows = tbody.selectAll("tr")
+    .data(numbers)
+    .enter()
+    .append("tr")
+    // zebra stripe
+    .style(
+      "background-color", function(d, i) { 
+        if (i % 2 == 0){
+          return "#FFFFFF";
+        }
+        else{
+          return "#E0E0E0";
+      }
+    })
+    // mouseover row highlight
+    .on("mouseover", function(){
+      d3.select(this).style("background-color", "#FFFF66");
+    })
+    .on("mouseout", function(){
+      tbody.selectAll("tr").style("background-color", function(d, i){
+        if (i % 2 == 0){
+          return "#FFFFFF";
+        }
+        else{
+          return "#E0E0E0";
+        }
+      })
+    });
+
+    // fill cells
+    var cells = rows.selectAll("td")
+    .data(function(row) {
+      return d3.range(Object.keys(row).length).map(function(column, i) {
+        return row[Object.keys(row)[i]];
+        });
+      })
+    .enter()
+    .append("td")
+    .style({
+      "padding": "2px",
+      "border": "1px solid black"
+    })
+    .style(
+      "background-color", function(){
+        d3.selectAll("td.col2").function
+
+      }
+    )
+    .attr('class', function(d,i){ return "col" + i; })
+    .text(function(d) { return d; })
+    // mouseover columns
+    .on("mouseover", function(d, i){
+      d3.selectAll("td.col" + i).classed("moused", true)
+    })
+    .on("mouseout", function(d, i){
+      d3.selectAll("td.col" + i).classed("moused", false);
+    });
+
+    var rates = d3.selectAll("td.col2")
+      .style(
+        "background-color", function(d, i){
+          return color(parseFloat(d));
+        }
+      );
+
+    rows.insert("td")
+    .style({
+      "padding": "2px",
+      "border": "1px solid black"
+    })
+    .append("svg")
+    .attr("width", 70)
+    .attr("height", 10)
+    .append("rect")
+    .attr("height", 10)
+    .attr("width", function(d) { return parseFloat(d[0]); });
+
+  })
+
+  </script>
+</body>
+</html>
