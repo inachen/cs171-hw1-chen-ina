@@ -42,6 +42,13 @@
       var max = d3.max(data, function(d) { return d.Rate; } );
       var min = 0;
 
+      // color function
+      var color = d3.scale.linear()
+      .domain([d3.min(d3.extent(data, function(d){return parseFloat(d.Rate)})), 
+        d3.max(d3.extent(data, function(d){return parseFloat(d.Rate)}))])
+      .interpolate(d3.interpolateRgb)
+      .range(["orangered", "silver"]);
+
       xScale.domain([min, max]);
       yScale.domain(data.map(state));
 
@@ -54,39 +61,106 @@
 
       var title = g.append("text")
         .attr("x", function(d) { width / 2.0; })
-        .attr("y", function(d) { height; })
+        .attr("y", function(d) { 0; })
         .text(function(d) { return "Unemployment Rates for States"; })
 
       var bars = groups
         .append("rect")
         .attr("width", function(d) { return xScale(d.Rate); })
-        .attr("height", bar_height);
+        .attr("height", bar_height)
+        .style("fill", function(d, i){
+          return color(d.Rate);}
+        );
 
       var states = groups
         .append("text")
-        .attr("x", function(d) { return xScale(d.Rate) + 5; })
+        .attr("x", function(d) { return -5; })
         .attr("y", function(d) { return bar_height/2 + 3; })
-        .style({"color": "black"})
+        .attr("text-anchor", "end")
+        .style({"font-color": "black"})
         .text(function(d) { return d.State; });
 
       var rates = groups
       .append("text")
         .attr("x", function(d) { return xScale(d.Rate) - 20; })
         .attr("y", function(d) { return bar_height/2 + 3; })
+        .style({"font-color": "white"})
         .text(function(d) { return d.Rate; })
 
-      // function reorder {
-      //   if input 
-      // }
+      // sorting vars
+      var sorted = false;
+      var last_val = "hi";
 
-      // d3.selectAll("input").on("click", reorder);
+      // ascending sort
+      function reorder(val) {
+        if (val == 'rate'){
+          data.sort(function(a, b) {
+            score = d3.ascending(parseFloat(a.Rate), parseFloat(b.Rate));
+            if (score != 0){
+              return score;
+            }
+            else {
+              return d3.ascending(a.State, b.State);
+            }});
 
+        }
 
-      // groups
-      //  .transition()
-      //  .duration(750)
-      //  .delay(function(d, i) { return i * 10; })
-      //  .attr("transform", function(d, i) { return "translate("+ ??? +", "+ ??? +")"; }) 
+        else {
+          data.sort(function(a, b) {
+            return d3.ascending(a.State, b.State);
+          }) 
+        }
+      }
+
+      // descending sort
+      function reorderrev(val) {
+        if (val == 'rate'){
+          data.sort(function(a, b) {
+            score = d3.descending(parseFloat(a.Rate), parseFloat(b.Rate));
+            if (score != 0){
+              return score;
+            }
+            else {
+              return d3.descending(a.State, b.State);
+            }});
+        }
+        else {
+          data.sort(function(a, b) {
+            return d3.descending(a.State, b.State);
+          }) 
+        }
+      }
+
+      d3.selectAll("input")
+      .on("click", function(){ 
+        if (this.value == last_val){
+          if (sorted == true){
+            sorted = false
+          }
+          else{
+            reorderrev(this.value);
+            yScale.domain(data.map(state));
+            groups.transition()
+            .duration(750)
+            .delay(function(d, i) { return i * 10; })
+            .attr("transform", function(d, i) { return "translate("+ 0 +", "+ yScale(d.State) +")"; }) 
+          }
+        }
+
+      })
+      .on("change", function(){
+        if (this.value != last_val){
+          last_val = this.value;
+          sorted = true;
+          reorder(this.value);
+          yScale.domain(data.map(state));
+          groups.transition()
+          .duration(750)
+          .delay(function(d, i) { return i * 10; })
+          .attr("transform", function(d, i) { return "translate("+ 0 +", "+ yScale(d.State) +")"; }) 
+        }
+      })
+
 
     });
   </script>
